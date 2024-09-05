@@ -1,6 +1,29 @@
 import cv2
 import numpy as np
 
+
+def smooth_face(face: np.ndarray) -> np.ndarray:
+    hsv_img = cv2.cvtColor(face, cv2.COLOR_BGR2HSV)
+
+    hsv_mask = cv2.inRange(hsv_img, np.array([0., 80., 80.]), np.array([200., 255., 255.]))
+    full_mask = cv2.merge((hsv_mask, hsv_mask, hsv_mask))
+
+    blurred_img = cv2.bilateralFilter(face, 15, 50, 50)
+
+    masked_img = cv2.bitwise_and(blurred_img, full_mask)
+
+    # Invert mask
+    inverted_mask = cv2.bitwise_not(full_mask)
+
+    # Anti-mask
+    masked_img2 = cv2.bitwise_and(face, inverted_mask)
+
+    # Add the masked images together
+    smoothed_face = cv2.add(masked_img2, masked_img)
+
+    return smoothed_face
+
+
 def distance2bbox(points, distance, max_shape=None):
     """Decode distance prediction to bounding box.
 
